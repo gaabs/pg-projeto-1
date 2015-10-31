@@ -1,0 +1,21 @@
+﻿Build started 28/04/2013 20:02:11.
+     1>Project "C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\Template2D.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Debug\Template2D.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\include\\" /ZI /nologo /W3 /WX- /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt src\Template2D.cpp
+         Template2D.cpp
+       Link:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\bin\Template2D.exe" /NOLOGO /LIBPATH:"C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\lib\\" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\Template2D.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\bin\Template2D.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\bin\Template2D.lib" /MACHINE:X86 Debug\Template2D.obj
+         LINK : C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\bin\Template2D.exe not found or not built by the last incremental link; performing full link
+         Template2D.vcxproj -> C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\bin\Template2D.exe
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\bin\Template2D.exe;#1" /manifest Debug\Template2D.exe.intermediate.manifest
+       FinalizeBuildStatus:
+         Deleting file "Debug\Template2D.unsuccessfulbuild".
+         Touching "Debug\Template2D.lastbuildstate".
+     1>Done Building Project "C:\Users\Romero\Documents\Romero\CIn\PG\Projetos\Projeto 1\Template2D\Template2D\Template2D\Template2D.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:03.71
