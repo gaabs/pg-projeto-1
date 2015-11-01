@@ -30,6 +30,7 @@ Referencia online para os comandos OpenGL (Man pages):
 */
 
 #include "Template2D.h"
+#include <windows.h> 
 
 int qtdQuadrados;
 int estado;
@@ -38,12 +39,18 @@ Quadrado quad[1000]; //falta usar Vector
 Quadrado aux[1000]; //falta usar Vector
 GLfloat window_width = 800.0;
 GLfloat window_height = 600.0;
+int UM, DOIS;
+
+bool SHOW_CONTROL_POINT;
+bool SHOW_POLIGONAL;
+bool SHOW_CURVE;
 
 void myinit()
 {
 	srand(time(NULL));
 	qtdQuadrados = 0;
 	estado = MODIFIED;
+	SHOW_CONTROL_POINT = SHOW_POLIGONAL = SHOW_CURVE = 1;
 	loop(0);
 }
 
@@ -100,32 +107,58 @@ void bezier() {
 
 void mydisplay()
 {
+	glutSetWindow(UM);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	if (SHOW_CONTROL_POINT) {
+		glBegin(GL_QUADS);
+		for (int i = 0; i < qtdQuadrados; i++) {
+			glColor3f(quad[i].r, quad[i].g, quad[i].b);
+			glVertex2f(quad[i].x, quad[i].y);
+			glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y);
+			glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y - (GLfloat)1 / 50);
+			glVertex2f(quad[i].x, quad[i].y - (GLfloat)1 / 50);
+		}
+		glEnd();
+	}
+
+
+	if (SHOW_POLIGONAL) {
+		glEnable(GL_LINE_SMOOTH);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glBegin(GL_LINE_STRIP);
+		for (int i = 0; i < qtdQuadrados; i++) {
+			glColor3f(quad[i].r, quad[i].g, quad[i].b);
+			glVertex2f(quad[i].x, quad[i].y);
+		}
+		glEnd();
+	}
+
+	if (qtdQuadrados > 2 && SHOW_CURVE) bezier();
+	
+	glFlush();
+
+}
+
+void mydisplay2()
+{
+	glutSetWindow(DOIS);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glBegin(GL_QUADS);
-	for(int i = 0; i < qtdQuadrados; i++){
-		glColor3f(quad[i].r, quad[i].g, quad[i].b);
-			glVertex2f(quad[i].x, quad[i].y);
-			glVertex2f(quad[i].x+(GLfloat)1/50, quad[i].y);
-			glVertex2f(quad[i].x+(GLfloat)1/50, quad[i].y-(GLfloat)1/50);
-			glVertex2f(quad[i].x, quad[i].y-(GLfloat)1/50);
-	}
-	glEnd();
-
-	glEnable(GL_LINE_SMOOTH);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glBegin(GL_LINE_STRIP);
 	for (int i = 0; i < qtdQuadrados; i++) {
 		glColor3f(quad[i].r, quad[i].g, quad[i].b);
 		glVertex2f(quad[i].x, quad[i].y);
+		glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y);
+		glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y - (GLfloat)1 / 50);
+		glVertex2f(quad[i].x, quad[i].y - (GLfloat)1 / 50);
 	}
 	glEnd();
 
-	if (qtdQuadrados > 2) bezier();
-	
 	glFlush();
 }
 
@@ -194,8 +227,26 @@ void handleMouse(int btn, int state, int x, int y)
 
 void hadleKeyboard(unsigned char key, int x, int y)
 {
-	if(key == ESC){
-		exit(0);
+	switch (key) {
+		case (ESC) :
+			exit(0);
+			break;
+
+		case ('1') :
+			SHOW_CONTROL_POINT = !SHOW_CONTROL_POINT;
+			estado = MODIFIED;
+			break;
+
+		case ('2') :
+			SHOW_POLIGONAL = !SHOW_POLIGONAL;
+			estado = MODIFIED;
+			break;
+
+		case ('3') :
+			SHOW_CURVE = !SHOW_CURVE;
+			estado = MODIFIED;
+			break;
+
 	}
 }
 
@@ -210,10 +261,12 @@ void loop(int id)
 {
 	if(estado == MODIFIED){
 		mydisplay();
+		mydisplay2();
 		estado = IDLE;
 	}
 	else if(estado != IDLE){
 		mydisplay();
+		mydisplay2();
 	}
 	glutTimerFunc(1000/FPS, loop, id);
 }
@@ -223,7 +276,14 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(window_width, window_height);
-	glutCreateWindow("Projeto1");
+	UM = glutCreateWindow("Curva de Bézier");
+
+	HDC hDC = NULL;
+	//HDC hDC = GetDC(win1); /* get the device context for a particular window */
+						   /* snip */
+	HGLRC hRC;
+	hRC = wglCreateContext(hDC); /* get a render context for the same window */
+								 /* repeat with hDC2 and hRC2 with another window handle*/
 
 	glutDisplayFunc(mydisplay);
 	glutReshapeFunc(myreshape);
@@ -234,6 +294,14 @@ int main(int argc, char **argv)
 
 	myinit();
 
+	//GLuint win2 = glutCreateSubWindow(win1, 0, 0, 200, 200);
+	glutInitWindowSize(window_width/2, window_height/2);
+	DOIS = glutCreateWindow("Gráfico");
+	
+	glutPositionWindow(900, 40);
+	glutDisplayFunc(mydisplay2);
+	glutReshapeFunc(myreshape);
+	
 	glutMainLoop();
 	return 0;
 }
