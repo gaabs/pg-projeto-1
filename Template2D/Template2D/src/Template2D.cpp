@@ -40,6 +40,7 @@ Quadrado aux[1000]; //falta usar Vector
 GLfloat window_width = 800.0;
 GLfloat window_height = 600.0;
 int UM, DOIS;
+GLfloat LADO = (GLfloat) 1.0 / 50;
 
 bool SHOW_CONTROL_POINT;
 bool SHOW_POLIGONAL;
@@ -116,9 +117,9 @@ void mydisplay()
 		for (int i = 0; i < qtdQuadrados; i++) {
 			glColor3f(quad[i].r, quad[i].g, quad[i].b);
 			glVertex2f(quad[i].x, quad[i].y);
-			glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y);
-			glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y - (GLfloat)1 / 50);
-			glVertex2f(quad[i].x, quad[i].y - (GLfloat)1 / 50);
+			glVertex2f(quad[i].x + LADO, quad[i].y);
+			glVertex2f(quad[i].x + LADO, quad[i].y - LADO);
+			glVertex2f(quad[i].x, quad[i].y - LADO);
 		}
 		glEnd();
 	}
@@ -218,7 +219,7 @@ void handleMouse(int btn, int state, int x, int y)
 			GLfloat x2 = ((((GLfloat)x)/window_width)*2.0)-1.0;
 			GLfloat y2 = -(((((GLfloat)y)/window_height)*2.0)-1.0);
 			
-			quad[qtdQuadrados++] = Quadrado((((GLfloat)(rand()%50))/100.0)+0.1, x2, y2,
+			quad[qtdQuadrados++] = Quadrado(LADO*2, x2, y2, 
 				((GLfloat)(rand()%256))/255.0, ((GLfloat)(rand()%256))/255.0, ((GLfloat)(rand()%256))/255.0);
 			estado = MODIFIED;
 		}
