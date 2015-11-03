@@ -41,6 +41,7 @@ GLfloat window_width = 800.0;
 GLfloat window_height = 600.0;
 int UM, DOIS;
 GLfloat LADO = (GLfloat) 1.0 / 50;
+int numeroAvaliacoes = 100;
 
 bool SHOW_CONTROL_POINT;
 bool SHOW_POLIGONAL;
@@ -65,16 +66,42 @@ void myreshape (GLsizei w, GLsizei h)
 	glOrtho(0, window_width, 0, window_height, -1.0, -1.0);
 }
 
+void drawTextBox(int fromLeft, int fromTop, int width, int height) {
+	//glColor3f(1.0f, 1.0f, 1.0f);
+	glColor3f(1.0f, 0, 0);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glBegin(GL_QUADS);
+	//glTexCoord2f(0, 0);
+	glVertex2i(fromLeft, fromTop);  // Upper Left
+	//glTexCoord2f(1, 0);
+	glVertex2i(fromLeft - width, fromTop);  // Uppright
+	//glTexCoord2f(1, 1);
+	glVertex2i(fromLeft - width, fromTop + height);  // Bottom right
+	//glTexCoord2f(0, 1);
+	glVertex2i(fromLeft, fromTop + height); // bottom left
+	glEnd();
+
+	glDisable(GL_BLEND);
+}
+
 void bezier() {
 	//printf("entrou!\n");
 
 	glBegin(GL_LINE_STRIP);
-	int N = 100*qtdQuadrados;
-	for (int n = 1; n < N; n++) {
+	glVertex2f(quad[0].x, quad[0].y);
+
+	//int N = 100*qtdQuadrados;
+	int N = numeroAvaliacoes;
+	double v = 1.0 / (N+1);
+
+	for (int n = 0; n < N; n++) {
 
 		int q = qtdQuadrados - 1;
 		double x, y;
-		double t = n*(1.0 / N);
+		double t = v * (n + 1);
+		//printf("%lf\n", t);
 
 		for (int i = 0; i < qtdQuadrados; i++) {
 			aux[i] = quad[i];
@@ -102,6 +129,8 @@ void bezier() {
 		//glVertex2f(aux[0].x + (GLfloat)1 / 50, aux[0].y - (GLfloat)1 / 50);
 		//glVertex2f(aux[0].x, aux[0].y - (GLfloat)1 / 50);
 	}
+
+	glVertex2f(quad[qtdQuadrados-1].x, quad[qtdQuadrados - 1].y);
 	glEnd();
 
 }
@@ -139,6 +168,8 @@ void mydisplay()
 	}
 
 	if (qtdQuadrados > 2 && SHOW_CURVE) bezier();
+
+	drawTextBox(10, 10, 100, 100);
 	
 	glFlush();
 
@@ -150,6 +181,8 @@ void mydisplay2()
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	/*
+
 	glBegin(GL_QUADS);
 	for (int i = 0; i < qtdQuadrados; i++) {
 		glColor3f(quad[i].r, quad[i].g, quad[i].b);
@@ -159,6 +192,9 @@ void mydisplay2()
 		glVertex2f(quad[i].x, quad[i].y - (GLfloat)1 / 50);
 	}
 	glEnd();
+
+	*/
+	drawTextBox(0.1, 0.1, 1, 1);
 
 	glFlush();
 }
@@ -233,21 +269,35 @@ void hadleKeyboard(unsigned char key, int x, int y)
 			exit(0);
 			break;
 
-		case ('1') :
+		case ('a') :
 			SHOW_CONTROL_POINT = !SHOW_CONTROL_POINT;
 			estado = MODIFIED;
 			break;
 
-		case ('2') :
+		case ('s') :
 			SHOW_POLIGONAL = !SHOW_POLIGONAL;
 			estado = MODIFIED;
 			break;
 
-		case ('3') :
+		case ('d') :
 			SHOW_CURVE = !SHOW_CURVE;
 			estado = MODIFIED;
 			break;
 
+		case ('0') :
+		case ('1') :
+		case ('2') :
+		case ('3') :
+		case ('4') :
+		case ('5') :
+		case ('6') :
+		case ('7') :
+		case ('8') :
+		case ('9') :
+		case ('\'') :
+			scanf("%d", &numeroAvaliacoes);
+			estado = MODIFIED;
+			break;
 	}
 }
 
@@ -292,8 +342,7 @@ int main(int argc, char **argv)
 	glutMotionFunc(handleMotion);
 	glutKeyboardUpFunc(hadleKeyboard);
 	glutSpecialUpFunc(hadleSpecialKeyboard);
-
-	myinit();
+	glutPositionWindow(0, 100);
 
 	//GLuint win2 = glutCreateSubWindow(win1, 0, 0, 200, 200);
 	glutInitWindowSize(window_width/2, window_height/2);
@@ -303,6 +352,7 @@ int main(int argc, char **argv)
 	glutDisplayFunc(mydisplay2);
 	glutReshapeFunc(myreshape);
 	
+	myinit();
 	glutMainLoop();
 	return 0;
 }
