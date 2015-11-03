@@ -41,6 +41,7 @@ GLfloat window_width = 800.0;
 GLfloat window_height = 600.0;
 int UM, DOIS;
 GLfloat LADO = (GLfloat) 1.0 / 50;
+int numeroAvaliacoes = 1000;
 
 bool SHOW_CONTROL_POINT;
 bool SHOW_POLIGONAL;
@@ -69,12 +70,17 @@ void bezier() {
 	//printf("entrou!\n");
 
 	glBegin(GL_LINE_STRIP);
-	int N = 100*qtdQuadrados;
-	for (int n = 1; n < N; n++) {
+	glVertex2f(quad[qtdQuadrados].x, quad[qtdQuadrados].y);
+
+	int N = numeroAvaliacoes;
+
+	double v = 1.0 / (N + 1);
+
+	for (int n = 0; n < N; n++) {
 
 		int q = qtdQuadrados - 1;
 		double x, y;
-		double t = n*(1.0 / N);
+		double t = (n+1)*v;
 
 		for (int i = 0; i < qtdQuadrados; i++) {
 			aux[i] = quad[i];
@@ -85,23 +91,17 @@ void bezier() {
 				x = (1 - t)*aux[i].x + t*aux[i + 1].x;
 				y = (1 - t)*aux[i].y + t*aux[i + 1].y;
 
-				//printf("aux[%d] x:%lf y:%lf\n", i, aux[i].x, aux[i].y);
-				//printf("(1-t)=%lf (1 - t)*aux[i].x=%lf\n", (1-t), (1 - t)*aux[i].x);
-				//printf("(t=%lf t*aux[i+1].x=%lf\n", t, t*aux[i+1].x);
 				aux[i].x = x;
 				aux[i].y = y;
 
-				//printf("construindo quadrado %d: %lf %lf\n",i, aux[i].x, aux[i].y);
 			}
 			q--;
 		}
 
 		glColor3f(1, 0, 0);
 		glVertex2f(aux[0].x, aux[0].y);
-		//glVertex2f(aux[0].x + (GLfloat)1 / 50, aux[0].y);
-		//glVertex2f(aux[0].x + (GLfloat)1 / 50, aux[0].y - (GLfloat)1 / 50);
-		//glVertex2f(aux[0].x, aux[0].y - (GLfloat)1 / 50);
 	}
+	glVertex2f(quad[qtdQuadrados].x, quad[qtdQuadrados].y);
 	glEnd();
 
 }
@@ -248,6 +248,11 @@ void hadleKeyboard(unsigned char key, int x, int y)
 			estado = MODIFIED;
 			break;
 
+		case ('3') :
+			scanf("%d", &numeroAvaliacoes);
+			estado = MODIFIED;
+			break;
+
 	}
 }
 
@@ -293,7 +298,6 @@ int main(int argc, char **argv)
 	glutKeyboardUpFunc(hadleKeyboard);
 	glutSpecialUpFunc(hadleSpecialKeyboard);
 
-	myinit();
 
 	//GLuint win2 = glutCreateSubWindow(win1, 0, 0, 200, 200);
 	glutInitWindowSize(window_width/2, window_height/2);
@@ -303,6 +307,7 @@ int main(int argc, char **argv)
 	glutDisplayFunc(mydisplay2);
 	glutReshapeFunc(myreshape);
 	
+	myinit();
 	glutMainLoop();
 	return 0;
 }
