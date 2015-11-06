@@ -12,31 +12,37 @@ Este programa foi feito para mostrar conceitos basicos de OpenGl e glut para
 a turma de Processamento Grafico do Centro de Informatica da UFPE.
 
 Funcionalidades:
-1-	Criar um quadrado com tamanho e cor aleatoria ao clicar com o botao
-	direito do mouse. A posicao e definida pela posicao atual do mouse.
-2-	Movimentar o quadrado segurando o botao esquerdo do mouse e arrastando.
+1-	Criar um Ponto com tamanho e cor aleatoria ao clicar com o botao
+direito do mouse. A posicao e definida pela posicao atual do mouse.
+2-	Movimentar o Ponto segurando o botao esquerdo do mouse e arrastando.
 3-	Limpar a tela apertando a tecla F5.
 4-	Sair do programa apertando a tecla ESC.
 
 Referencias:
 Funcoes de C/C++:
-	http://www.cplusplus.com/
+http://www.cplusplus.com/
 Copia online do Red Book (OpenGL Programming Guide):
-	http://fly.cc.fer.hr/~unreal/theredbook/
+http://fly.cc.fer.hr/~unreal/theredbook/
 Referencia online para os comandos OpenGL (Man pages):
-	http://www.opengl.org/sdk/docs/man/
+http://www.opengl.org/sdk/docs/man/
 
 -----------------------------------------------------------------------------
 */
 
 #include "Template2D.h"
-#include <windows.h> 
+#include <stdio.h>
+#include <math.h>
+#include <algorithm>
 
-int qtdQuadrados;
+#define maxPontos 1000
+
+int qtdPontos;
 int estado;
 GLfloat mouse_x, mouse_y;
-Quadrado quad[1000]; //falta usar Vector
-Quadrado aux[1000]; //falta usar Vector
+Ponto pontos[maxPontos];
+Ponto derivada1[maxPontos];
+Ponto derivada2[maxPontos];
+Ponto aux[maxPontos];
 GLfloat window_width = 800.0;
 GLfloat window_height = 600.0;
 int UM, DOIS;
@@ -50,19 +56,19 @@ bool SHOW_CURVE;
 void myinit()
 {
 	srand(time(NULL));
-	qtdQuadrados = 0;
+	qtdPontos = 0;
 	estado = MODIFIED;
 	SHOW_CONTROL_POINT = SHOW_POLIGONAL = SHOW_CURVE = 1;
 	loop(0);
 }
 
-void myreshape (GLsizei w, GLsizei h)
+void myreshape(GLsizei w, GLsizei h)
 {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	window_width = (GLfloat) w;
-	window_height = (GLfloat) h;
+	window_width = (GLfloat)w;
+	window_height = (GLfloat)h;
 	glOrtho(0, window_width, 0, window_height, -1.0, -1.0);
 }
 
@@ -90,21 +96,21 @@ void bezier() {
 	//printf("entrou!\n");
 
 	glBegin(GL_LINE_STRIP);
-	glVertex2f(quad[0].x, quad[0].y);
 
 	//int N = 100*qtdQuadrados;
 	int N = numeroAvaliacoes;
-	double v = 1.0 / (N+1);
+
+	glVertex2f(pontos[0].x, pontos[0].y);
+
+	double v = 1.0 / (N + 1);
 
 	for (int n = 0; n < N; n++) {
-
-		int q = qtdQuadrados - 1;
+		int q = qtdPontos - 1;
 		double x, y;
-		double t = v * (n + 1);
-		//printf("%lf\n", t);
+		double t = (n + 1)*v;
 
-		for (int i = 0; i < qtdQuadrados; i++) {
-			aux[i] = quad[i];
+		for (int i = 0; i < qtdPontos; i++) {
+			aux[i] = pontos[i];
 		}
 
 		while (q > 0) {
@@ -112,27 +118,29 @@ void bezier() {
 				x = (1 - t)*aux[i].x + t*aux[i + 1].x;
 				y = (1 - t)*aux[i].y + t*aux[i + 1].y;
 
-				//printf("aux[%d] x:%lf y:%lf\n", i, aux[i].x, aux[i].y);
-				//printf("(1-t)=%lf (1 - t)*aux[i].x=%lf\n", (1-t), (1 - t)*aux[i].x);
-				//printf("(t=%lf t*aux[i+1].x=%lf\n", t, t*aux[i+1].x);
 				aux[i].x = x;
 				aux[i].y = y;
 
-				//printf("construindo quadrado %d: %lf %lf\n",i, aux[i].x, aux[i].y);
 			}
 			q--;
 		}
 
 		glColor3f(1, 0, 0);
 		glVertex2f(aux[0].x, aux[0].y);
-		//glVertex2f(aux[0].x + (GLfloat)1 / 50, aux[0].y);
-		//glVertex2f(aux[0].x + (GLfloat)1 / 50, aux[0].y - (GLfloat)1 / 50);
-		//glVertex2f(aux[0].x, aux[0].y - (GLfloat)1 / 50);
 	}
 
-	glVertex2f(quad[qtdQuadrados-1].x, quad[qtdQuadrados - 1].y);
-	glEnd();
 
+	glVertex2f(pontos[qtdPontos - 1].x, pontos[qtdPontos - 1].y);
+	glEnd();
+}
+
+void calcDerivadas() {
+	for (int i = 0; i < qtdPontos-1; i++) {
+		derivada1[i] = pontos[i + 1] - pontos[i];
+	}
+	for (int i = 0; i < qtdPontos - 2; i++) {
+		derivada2[i] = derivada1[i + 1] - derivada1[i];
+	}
 }
 
 void mydisplay()
@@ -142,13 +150,11 @@ void mydisplay()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	if (SHOW_CONTROL_POINT) {
-		glBegin(GL_QUADS);
-		for (int i = 0; i < qtdQuadrados; i++) {
-			glColor3f(quad[i].r, quad[i].g, quad[i].b);
-			glVertex2f(quad[i].x, quad[i].y);
-			glVertex2f(quad[i].x + LADO, quad[i].y);
-			glVertex2f(quad[i].x + LADO, quad[i].y - LADO);
-			glVertex2f(quad[i].x, quad[i].y - LADO);
+		glPointSize(GLfloat(5.0));
+		glBegin(GL_POINTS);
+		for (int i = 0; i < qtdPontos; i++) {
+			glColor3f(pontos[i].r, pontos[i].g, pontos[i].b);
+			glVertex2f(pontos[i].x, pontos[i].y);
 		}
 		glEnd();
 	}
@@ -160,50 +166,94 @@ void mydisplay()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glBegin(GL_LINE_STRIP);
-		for (int i = 0; i < qtdQuadrados; i++) {
-			glColor3f(quad[i].r, quad[i].g, quad[i].b);
-			glVertex2f(quad[i].x, quad[i].y);
+		for (int i = 0; i < qtdPontos; i++) {
+			glColor3f(pontos[i].r, pontos[i].g, pontos[i].b);
+			glVertex2f(pontos[i].x, pontos[i].y);
 		}
 		glEnd();
 	}
-
-	if (qtdQuadrados > 2 && SHOW_CURVE) bezier();
-
-	drawTextBox(10, 10, 100, 100);
 	
+	if (qtdPontos > 2 && SHOW_CURVE) bezier();
+
 	glFlush();
 
 }
 
 void mydisplay2()
 {
+	calcDerivadas();
+
 	glutSetWindow(DOIS);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	/*
+	//http://www.math24.net/images/13sodi7.gif
+	// k = (x'y'' - y'x'')/
+	//	((x')^2 + (y')^2)^(3/2)
+	double K[maxPontos];
 
-	glBegin(GL_QUADS);
-	for (int i = 0; i < qtdQuadrados; i++) {
-		glColor3f(quad[i].r, quad[i].g, quad[i].b);
-		glVertex2f(quad[i].x, quad[i].y);
-		glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y);
-		glVertex2f(quad[i].x + (GLfloat)1 / 50, quad[i].y - (GLfloat)1 / 50);
-		glVertex2f(quad[i].x, quad[i].y - (GLfloat)1 / 50);
+	double maiorAbs = 0;
+
+	for (int i = 0; i < qtdPontos-2; i++) {
+		K[i] = (derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x) / ((derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y));
+		//printf("i:%d k:%lf\n", i, K[i]);
+		maiorAbs = max(maiorAbs, fabs(K[i]));
+	}
+
+	glPointSize(GLfloat(5.0));
+
+	int Q = qtdPontos - 2;
+
+	glBegin(GL_POINTS);
+
+	double xMax = -1 + 2.0*(qtdPontos - 3) / (qtdPontos - 2);
+	xMax = 1 - xMax;
+	xMax /= 2;
+
+	double x;
+	double y;
+
+	for (int i = 0; i < qtdPontos - 2; i++) {
+		glColor3f(0, 1, 0);
+		x = -1 + 2.0*i / (qtdPontos - 2);
+		y = K[i] / maiorAbs;
+
+		x /= 4;
+		x *= 3;
+
+		y /= 4;
+		y *= 3;
+
+		glVertex2f(x, y);
+		printf("i:%d qtd:%d X:%lf Y:%lf xMax:%lf\n", i, qtdPontos-2, -1 + (2.0*i)/(qtdPontos - 2), K[i] / maiorAbs, xMax);
 	}
 	glEnd();
 
-	*/
-	drawTextBox(0.1, 0.1, 1, 1);
+	glBegin(GL_LINE_STRIP);
+	for (int i = 0; i < qtdPontos - 2; i++) {
+		glColor3f(0, 1, 0);
+
+		x = -1 + 2.0*i / (qtdPontos - 2);
+		y = K[i] / maiorAbs;
+
+		x /= 4;
+		x *= 3;
+
+		y /= 4;
+		y *= 3;
+
+		glVertex2f(x, y);
+	}
+	glEnd();
 
 	glFlush();
 }
 
 void handleMotion(int x, int y)
 {
-	if((estado != MODIFIED) && (estado != IDLE)){
-		quad[estado].x = (((((GLfloat)x)/window_width)*2.0)-1.0) + mouse_x;
-		quad[estado].y = (-(((((GLfloat)y)/window_height)*2.0)-1.0)) + mouse_y;
+	if ((estado != MODIFIED) && (estado != IDLE)) {
+		pontos[estado].x = (((((GLfloat)x) / window_width)*2.0) - 1.0) + mouse_x;
+		pontos[estado].y = (-(((((GLfloat)y) / window_height)*2.0) - 1.0)) + mouse_y;
 	}
 }
 
@@ -211,21 +261,22 @@ void handleMotion(int x, int y)
 //x2 e y2 eh onde cliquei so que ele converte pra as coordenadas de tela do OpenGL
 void handleMouse(int btn, int state, int x, int y)
 {
-	if (estado == IDLE && btn == GLUT_LEFT_BUTTON){
-		mouse_x = ((((GLfloat)x)/window_width)*2.0)-1.0;
-		mouse_y = -(((((GLfloat)y)/window_height)*2.0)-1.0);
-		if (state == GLUT_DOWN){
-			for(int i = qtdQuadrados-1; i >= 0; i--){
-				if((mouse_x >= quad[i].x) && (mouse_x <= (quad[i].x+quad[i].lado)) && (mouse_y <= quad[i].y) && (mouse_y >= (quad[i].y-quad[i].lado))){
-					mouse_x = quad[i].x - mouse_x;
-					mouse_y = quad[i].y - mouse_y;
+	if (estado == IDLE && btn == GLUT_LEFT_BUTTON) {
+		mouse_x = ((((GLfloat)x) / window_width)*2.0) - 1.0;
+		mouse_y = -(((((GLfloat)y) / window_height)*2.0) - 1.0);
+		//printf("x:%lf y:%lf\n", mouse_x, mouse_y);
+		if (state == GLUT_DOWN) {
+			for (int i = qtdPontos - 1; i >= 0; i--) {
+				if ((mouse_x >= pontos[i].x - LADO) && (mouse_x <= (pontos[i].x + LADO)) && (mouse_y <= pontos[i].y + LADO) && (mouse_y >= (pontos[i].y - LADO))) {
+					mouse_x = pontos[i].x - mouse_x;
+					mouse_y = pontos[i].y - mouse_y;
 					estado = i;
 					break;
 				}
 			}
 		}
 	}
-	else if(btn == GLUT_LEFT_BUTTON && state == GLUT_UP){
+	else if (btn == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		estado = MODIFIED;
 	}
 
@@ -233,14 +284,14 @@ void handleMouse(int btn, int state, int x, int y)
 		mouse_x = ((((GLfloat)x) / window_width)*2.0) - 1.0;
 		mouse_y = -(((((GLfloat)y) / window_height)*2.0) - 1.0);
 		if (state == GLUT_DOWN) {
-			for (int i = qtdQuadrados - 1; i >= 0; i--) {
-				if ((mouse_x >= quad[i].x) && (mouse_x <= (quad[i].x + quad[i].lado)) && (mouse_y <= quad[i].y) && (mouse_y >= (quad[i].y - quad[i].lado))) {
-					mouse_x = quad[i].x - mouse_x;
-					mouse_y = quad[i].y - mouse_y;
-					for (int j = i; j < qtdQuadrados - 1; j++) {
-						quad[j] = quad[j + 1];
+			for (int i = qtdPontos - 1; i >= 0; i--) {
+				if ((mouse_x >= pontos[i].x - LADO) && (mouse_x <= (pontos[i].x + LADO)) && (mouse_y <= pontos[i].y + LADO) && (mouse_y >= (pontos[i].y - LADO))) {
+					mouse_x = pontos[i].x - mouse_x;
+					mouse_y = pontos[i].y - mouse_y;
+					for (int j = i; j < qtdPontos - 1; j++) {
+						pontos[j] = pontos[j + 1];
 					}
-					qtdQuadrados--;
+					qtdPontos--;
 
 					estado = MODIFIED;
 					break;
@@ -250,13 +301,13 @@ void handleMouse(int btn, int state, int x, int y)
 	}
 
 
-	else if(estado == IDLE && btn == GLUT_RIGHT_BUTTON){
-		if (state == GLUT_DOWN){
-			GLfloat x2 = ((((GLfloat)x)/window_width)*2.0)-1.0;
-			GLfloat y2 = -(((((GLfloat)y)/window_height)*2.0)-1.0);
-			
-			quad[qtdQuadrados++] = Quadrado(LADO*2, x2, y2, 
-				((GLfloat)(rand()%256))/255.0, ((GLfloat)(rand()%256))/255.0, ((GLfloat)(rand()%256))/255.0);
+	else if (estado == IDLE && btn == GLUT_RIGHT_BUTTON) {
+		if (state == GLUT_DOWN) {
+			GLfloat x2 = ((((GLfloat)x) / window_width)*2.0) - 1.0;
+			GLfloat y2 = -(((((GLfloat)y) / window_height)*2.0) - 1.0);
+
+			pontos[qtdPontos++] = Ponto(x2, y2,
+				((GLfloat)(rand() % 256)) / 255.0, ((GLfloat)(rand() % 256)) / 255.0, ((GLfloat)(rand() % 256)) / 255.0);
 			estado = MODIFIED;
 		}
 	}
@@ -265,61 +316,51 @@ void handleMouse(int btn, int state, int x, int y)
 void hadleKeyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
-		case (ESC) :
-			exit(0);
-			break;
+	case (ESC) :
+		exit(0);
+		break;
 
-		case ('a') :
-			SHOW_CONTROL_POINT = !SHOW_CONTROL_POINT;
-			estado = MODIFIED;
-			break;
+	case ('1') :
+		SHOW_CONTROL_POINT = !SHOW_CONTROL_POINT;
+		estado = MODIFIED;
+		break;
 
-		case ('s') :
-			SHOW_POLIGONAL = !SHOW_POLIGONAL;
-			estado = MODIFIED;
-			break;
+	case ('2') :
+		SHOW_POLIGONAL = !SHOW_POLIGONAL;
+		estado = MODIFIED;
+		break;
 
-		case ('d') :
-			SHOW_CURVE = !SHOW_CURVE;
-			estado = MODIFIED;
-			break;
+	case ('3') :
+		SHOW_CURVE = !SHOW_CURVE;
+		estado = MODIFIED;
+		break;
 
-		case ('0') :
-		case ('1') :
-		case ('2') :
-		case ('3') :
-		case ('4') :
-		case ('5') :
-		case ('6') :
-		case ('7') :
-		case ('8') :
-		case ('9') :
-		case ('\'') :
-			scanf("%d", &numeroAvaliacoes);
-			estado = MODIFIED;
-			break;
+	case ('\'') :
+		scanf("%d", &numeroAvaliacoes);
+		estado = MODIFIED;
+		break;
 	}
 }
 
 void hadleSpecialKeyboard(int key, int x, int y)
 {
-	if(key == GLUT_KEY_F5){
+	if (key == GLUT_KEY_F5) {
 		myinit();
 	}
 }
 
 void loop(int id)
 {
-	if(estado == MODIFIED){
+	if (estado == MODIFIED) {
 		mydisplay();
 		mydisplay2();
 		estado = IDLE;
 	}
-	else if(estado != IDLE){
+	else if (estado != IDLE) {
 		mydisplay();
 		mydisplay2();
 	}
-	glutTimerFunc(1000/FPS, loop, id);
+	glutTimerFunc(1000 / FPS, loop, id);
 }
 
 int main(int argc, char **argv)
@@ -327,14 +368,7 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(window_width, window_height);
-	UM = glutCreateWindow("Curva de Bézier");
-
-	HDC hDC = NULL;
-	//HDC hDC = GetDC(win1); /* get the device context for a particular window */
-						   /* snip */
-	HGLRC hRC;
-	hRC = wglCreateContext(hDC); /* get a render context for the same window */
-								 /* repeat with hDC2 and hRC2 with another window handle*/
+	UM = glutCreateWindow("Curva de Bezier");
 
 	glutDisplayFunc(mydisplay);
 	glutReshapeFunc(myreshape);
@@ -344,14 +378,13 @@ int main(int argc, char **argv)
 	glutSpecialUpFunc(hadleSpecialKeyboard);
 	glutPositionWindow(0, 100);
 
-	//GLuint win2 = glutCreateSubWindow(win1, 0, 0, 200, 200);
-	glutInitWindowSize(window_width/2, window_height/2);
-	DOIS = glutCreateWindow("Gráfico");
-	
+	glutInitWindowSize(window_width / 2, window_height / 2);
+	DOIS = glutCreateWindow("Grafico");
+
 	glutPositionWindow(900, 40);
 	glutDisplayFunc(mydisplay2);
 	glutReshapeFunc(myreshape);
-	
+
 	myinit();
 	glutMainLoop();
 	return 0;

@@ -27,9 +27,15 @@ using namespace std;
 #define IDLE		-2	// Nada a fazer
 #define MODIFIED	-1	// A tela foi modificada
 
-struct Quadrado{
-	GLfloat lado, x, y, r, g, b;
-	Quadrado(GLfloat lado=0.0, GLfloat x=0.0, GLfloat y=0.0, GLfloat r=0.0, GLfloat g=0.0, GLfloat b=0.0):lado(lado),x(x),y(y),r(r),g(g),b(b){}
+struct Ponto{
+	GLfloat x, y, r, g, b;
+	Ponto(GLfloat x=0.0, GLfloat y=0.0, GLfloat r=0.0, GLfloat g=0.0, GLfloat b=0.0): x(x),y(y),r(r),g(g),b(b){}
+
+	Ponto operator-(const Ponto &p) const {
+		GLfloat X = x - p.x;
+		GLfloat Y = y - p.y;
+		return Ponto(X,Y);
+	}
 };
 
 /**
