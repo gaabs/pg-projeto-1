@@ -127,13 +127,11 @@ void mydisplay()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	if (SHOW_CONTROL_POINT) {
-		glBegin(GL_QUADS);
+		glPointSize(GLfloat(5.0));
+		glBegin(GL_POINTS);
 		for (int i = 0; i < qtdPontos; i++) {
 			glColor3f(pontos[i].r, pontos[i].g, pontos[i].b);
 			glVertex2f(pontos[i].x, pontos[i].y);
-			glVertex2f(pontos[i].x + LADO, pontos[i].y);
-			glVertex2f(pontos[i].x + LADO, pontos[i].y - LADO);
-			glVertex2f(pontos[i].x, pontos[i].y - LADO);
 		}
 		glEnd();
 	}
@@ -166,7 +164,6 @@ void mydisplay2()
 	glutSetWindow(DOIS);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
-	glBegin(GL_LINE_STRIP);
 
 	// k = (x'y'' - y'x'')/
 	//	((x')^2 + (y')^2)^(3/2)
@@ -176,18 +173,23 @@ void mydisplay2()
 
 	for (int i = 0; i < qtdPontos-2; i++) {
 		K[i] = (derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x) / ((derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y));
-		printf("i:%d k:%lf\n", i, K[i]);
+		//printf("i:%d k:%lf\n", i, K[i]);
 		maiorAbs = max(maiorAbs, fabs(K[i]));
-
-		glColor3f(0, 1, 0);
-		glVertex2f(-1 + 2.0*i / (qtdPontos - 2), K[i]);
-		
 	}
-	for (int i = 0; i < qtdPontos - 2; i++) {
-		//glColor3f(0, 1, 0);
-		//glVertex2f(-1 + 2.0*i/(qtdPontos-2), 1 + -2.0*K[i]/maiorAbs);
-		printf("i:%d calc:%lf kMax:%lf\n", i, (qtdPontos - 2), 1 + -2.0*K[i] / maiorAbs, maiorAbs);
 
+	glPointSize(GLfloat(5.0));
+	glBegin(GL_POINTS);
+	for (int i = 0; i < qtdPontos - 2; i++) {
+		glColor3f(0, 1, 0);
+		glVertex2f(-1 + 2.0*i / (qtdPontos - 3), K[i] / maiorAbs);
+		//printf("i:%d qtd:%d div:%lf\n", i, qtdPontos-3, (1.0*i)/(qtdPontos - 3) );
+	}
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+	for (int i = 0; i < qtdPontos - 2; i++) {
+		glColor3f(0, 1, 0);
+		glVertex2f(-1 + 2.0*i/(qtdPontos-3), K[i]/maiorAbs);
 	}
 	glEnd();
 
@@ -209,10 +211,10 @@ void handleMouse(int btn, int state, int x, int y)
 	if (estado == IDLE && btn == GLUT_LEFT_BUTTON) {
 		mouse_x = ((((GLfloat)x) / window_width)*2.0) - 1.0;
 		mouse_y = -(((((GLfloat)y) / window_height)*2.0) - 1.0);
-		printf("x:%lf y:%lf\n", mouse_x, mouse_y);
+		//printf("x:%lf y:%lf\n", mouse_x, mouse_y);
 		if (state == GLUT_DOWN) {
 			for (int i = qtdPontos - 1; i >= 0; i--) {
-				if ((mouse_x >= pontos[i].x) && (mouse_x <= (pontos[i].x + LADO)) && (mouse_y <= pontos[i].y) && (mouse_y >= (pontos[i].y - LADO))) {
+				if ((mouse_x >= pontos[i].x - LADO) && (mouse_x <= (pontos[i].x + LADO)) && (mouse_y <= pontos[i].y + LADO) && (mouse_y >= (pontos[i].y - LADO))) {
 					mouse_x = pontos[i].x - mouse_x;
 					mouse_y = pontos[i].y - mouse_y;
 					estado = i;
@@ -230,7 +232,7 @@ void handleMouse(int btn, int state, int x, int y)
 		mouse_y = -(((((GLfloat)y) / window_height)*2.0) - 1.0);
 		if (state == GLUT_DOWN) {
 			for (int i = qtdPontos - 1; i >= 0; i--) {
-				if ((mouse_x >= pontos[i].x) && (mouse_x <= (pontos[i].x + LADO)) && (mouse_y <= pontos[i].y) && (mouse_y >= (pontos[i].y - LADO))) {
+				if ((mouse_x >= pontos[i].x - LADO) && (mouse_x <= (pontos[i].x + LADO)) && (mouse_y <= pontos[i].y + LADO) && (mouse_y >= (pontos[i].y - LADO))) {
 					mouse_x = pontos[i].x - mouse_x;
 					mouse_y = pontos[i].y - mouse_y;
 					for (int j = i; j < qtdPontos - 1; j++) {
