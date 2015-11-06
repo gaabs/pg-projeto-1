@@ -30,9 +30,9 @@ http://www.opengl.org/sdk/docs/man/
 */
 
 #include "Template2D.h"
-#include <windows.h>
+#include <stdio.h>
 #include <math.h>
- 
+#include <algorithm>
 
 #define maxPontos 1000
 
@@ -159,12 +159,12 @@ void mydisplay()
 void mydisplay2()
 {
 	calcDerivadas();
-	//http://www.math24.net/images/13sodi7.gif
 
 	glutSetWindow(DOIS);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	//http://www.math24.net/images/13sodi7.gif
 	// k = (x'y'' - y'x'')/
 	//	((x')^2 + (y')^2)^(3/2)
 	double K[maxPontos];
@@ -178,18 +178,49 @@ void mydisplay2()
 	}
 
 	glPointSize(GLfloat(5.0));
+
+	int Q = qtdPontos - 2;
+
+
 	glBegin(GL_POINTS);
+
+	double xMax = -1 + 2.0*(qtdPontos - 3) / (qtdPontos - 2);
+	xMax = 1 - xMax;
+	xMax /= 2;
+
+	double x;
+	double y;
+
 	for (int i = 0; i < qtdPontos - 2; i++) {
 		glColor3f(0, 1, 0);
-		glVertex2f(-1 + 2.0*i / (qtdPontos - 3), K[i] / maiorAbs);
-		//printf("i:%d qtd:%d div:%lf\n", i, qtdPontos-3, (1.0*i)/(qtdPontos - 3) );
+		x = -1 + 2.0*i / (qtdPontos - 2);
+		y = K[i] / maiorAbs;
+
+		x /= 4;
+		x *= 3;
+
+		y /= 4;
+		y *= 3;
+
+		glVertex2f(x, y);
+		printf("i:%d qtd:%d X:%lf Y:%lf xMax:%lf\n", i, qtdPontos-2, -1 + (2.0*i)/(qtdPontos - 2), K[i] / maiorAbs, xMax);
 	}
 	glEnd();
 
 	glBegin(GL_LINE_STRIP);
 	for (int i = 0; i < qtdPontos - 2; i++) {
 		glColor3f(0, 1, 0);
-		glVertex2f(-1 + 2.0*i/(qtdPontos-3), K[i]/maiorAbs);
+
+		x = -1 + 2.0*i / (qtdPontos - 2);
+		y = K[i] / maiorAbs;
+
+		x /= 4;
+		x *= 3;
+
+		y /= 4;
+		y *= 3;
+
+		glVertex2f(x, y);
 	}
 	glEnd();
 
@@ -316,14 +347,7 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(window_width, window_height);
-	UM = glutCreateWindow("Curva de Bézier");
-
-	HDC hDC = NULL;
-	//HDC hDC = GetDC(win1); /* get the device context for a particular window */
-	/* snip */
-	HGLRC hRC;
-	hRC = wglCreateContext(hDC); /* get a render context for the same window */
-								 /* repeat with hDC2 and hRC2 with another window handle*/
+	UM = glutCreateWindow("Curva de Bezier");
 
 	glutDisplayFunc(mydisplay);
 	glutReshapeFunc(myreshape);
@@ -332,10 +356,8 @@ int main(int argc, char **argv)
 	glutKeyboardUpFunc(hadleKeyboard);
 	glutSpecialUpFunc(hadleSpecialKeyboard);
 
-
-	//GLuint win2 = glutCreateSubWindow(win1, 0, 0, 200, 200);
 	glutInitWindowSize(window_width / 2, window_height / 2);
-	DOIS = glutCreateWindow("Gráfico");
+	DOIS = glutCreateWindow("Grafico");
 
 	glutPositionWindow(900, 40);
 	glutDisplayFunc(mydisplay2);
