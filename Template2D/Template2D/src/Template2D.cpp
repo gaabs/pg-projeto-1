@@ -193,10 +193,15 @@ void mydisplay2()
 	double K[maxPontos];
 
 	double maiorAbs = 0;
+	double num, den;
 
 	for (int i = 0; i < qtdPontos-2; i++) {
-		K[i] = (derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x) / ((derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y));
-		//printf("i:%d k:%lf\n", i, K[i]);
+		num = derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x;
+		den = (derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y);
+		den = pow(den, 3);
+		den = sqrt(den);
+		K[i] = num / den;
+		//printf("i:%d num:%lf den:%lf k:%lf\n", i, num,den, K[i]);
 		maiorAbs = max(maiorAbs, fabs(K[i]));
 	}
 
