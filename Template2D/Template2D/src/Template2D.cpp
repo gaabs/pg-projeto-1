@@ -6,15 +6,15 @@ Federal University of Pernambuco - UFPE
 
 @author Giovanni Barros (gaabs) e Pedro Sereno (psg2)
 
-Descrição: o usuário entra via mouse com os pontos de controle de uma curva de Bézier. 
-O número de pontos de controle é arbitrário, sem limite. O sistema desenha a curva correspondente, 
-e, numa outra janela, desenha o gráfico da curvatura da curva (normalizada para caber na janela). 
-O usuário pode modificar o posicionamento dos pontos, deletar e inserir pontos, e o sistema 
-responder em tempo real de forma adequada, reconstruindo a curva correspondente. 
-O usuário poderá suprimir os pontos de controle, a poligonal de controle, e os pontos da curva. 
-O usuário também poderá determinar o número de avaliações que deverá ser usado para então o 
-sistema calcular os correspondentes pontos da curva e ligá-los por retas. 
-As avaliações deverão ser feitas obrigatoriamente com o Algoritmo de de Casteljau, 
+Descrição: o usuário entra via mouse com os pontos de controle de uma curva de Bézier.
+O número de pontos de controle é arbitrário, sem limite. O sistema desenha a curva correspondente,
+e, numa outra janela, desenha o gráfico da curvatura da curva (normalizada para caber na janela).
+O usuário pode modificar o posicionamento dos pontos, deletar e inserir pontos, e o sistema
+responder em tempo real de forma adequada, reconstruindo a curva correspondente.
+O usuário poderá suprimir os pontos de controle, a poligonal de controle, e os pontos da curva.
+O usuário também poderá determinar o número de avaliações que deverá ser usado para então o
+sistema calcular os correspondentes pontos da curva e ligá-los por retas.
+As avaliações deverão ser feitas obrigatoriamente com o Algoritmo de de Casteljau,
 tanto para a curva quanto para o cálculo das derivadas.
 
 Funcionalidades:
@@ -58,6 +58,9 @@ Ponto derivada2[maxPontos];
 Ponto aux[maxPontos];
 GLfloat window_width = 800.0;
 GLfloat window_height = 600.0;
+GLfloat window2_width = 400.0;
+GLfloat window2_height = 300.0;
+
 int UM, DOIS;
 GLfloat LADO = (GLfloat) 1.0 / 50;
 int numeroAvaliacoes = 100;
@@ -85,6 +88,34 @@ void myreshape(GLsizei w, GLsizei h)
 	glOrtho(0, window_width, 0, window_height, -1.0, -1.0);
 }
 
+void myreshape2(GLsizei w, GLsizei h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	window2_width = (GLfloat)w;
+	window2_height = (GLfloat)h;
+	glOrtho(0, window2_width, 0, window2_height, -1.0, -1.0);
+}
+
+void calcDerivadas(int n, double t) {
+	int N = numeroAvaliacoes;
+
+
+	// Se t está além da metade, a primeira metade é a maior e vice versa.
+	// Na subdivisão, considera-se o ponto da subdivisão o inicial.
+	if (t > 0.5) {
+		derivada1[n] = pontosDivisao[qtdPontos - 2][0] - pontosDivisao[qtdPontos - 1][0];
+		derivada1[n + 1] = pontosDivisao[qtdPontos - 3][0] - pontosDivisao[qtdPontos - 2][0];
+		derivada2[n] = derivada1[n + 1] - derivada1[n];
+	}
+	else {
+		derivada1[n] = pontosDivisao[qtdPontos - 2][1] - pontosDivisao[qtdPontos - 1][0];
+		derivada1[n + 1] = pontosDivisao[qtdPontos - 3][2] - pontosDivisao[qtdPontos - 2][1];
+		derivada2[n] = derivada1[n + 1] - derivada1[n];
+	}
+}
+
 void bezier() {
 	glBegin(GL_LINE_STRIP);
 
@@ -93,7 +124,8 @@ void bezier() {
 
 	glVertex2f(pontos[0].x, pontos[0].y);
 
-	double v = 1.0 / (N + 1);
+	double v = 1.0 / (N + 1); // v define a distância entre dois Ts consecutivos da avaliacao da curva, sendo eles equidistantes.
+
 
 	for (int n = 0; n < N; n++) {
 		int q = qtdPontos - 1;
@@ -115,7 +147,7 @@ void bezier() {
 				aux[i].x = x;
 				aux[i].y = y;
 
-				pontosDivisao[a + 1][i] = aux[i];
+				pontosDivisao[a + 1][i] = aux[i]; // Os pontos utilizados para encontrar o ponto da curva são armazenados para utilizar os pontos da subdivisão necessarios posteriormente
 				//if (t == v) printf("(%d,%d) ", a + 1, i);
 			}
 			//if (t == v) puts("");
@@ -126,27 +158,12 @@ void bezier() {
 		pontosCurva[n].x = aux[0].x;
 		pontosCurva[n].y = aux[0].y;
 
-		calcDerivadas(n, t);
+		calcDerivadas(n, t); // Para cada ponto de avaliação, leva-se em conta sua subdivisão e calcula-se as derivadas da maior das duas curvas da subdivisão para utilizar no calculo da curvatura;
 	}
 
 
 	glVertex2f(pontos[qtdPontos - 1].x, pontos[qtdPontos - 1].y);
 	glEnd();
-}
-
-void calcDerivadas(int n, double t) {
-	int N = numeroAvaliacoes;
-
-	if (t > 0.5) {
-		derivada1[n] = pontosDivisao[qtdPontos - 2][0] - pontosDivisao[qtdPontos - 1][0];
-		derivada1[n + 1] = pontosDivisao[qtdPontos - 3][0] - pontosDivisao[qtdPontos - 2][0];
-		derivada2[n] = derivada1[n + 1] - derivada1[n];
-	}
-	else {
-		derivada1[n] = pontosDivisao[qtdPontos - 2][1] - pontosDivisao[qtdPontos - 1][0];
-		derivada1[n + 1] = pontosDivisao[qtdPontos - 3][2] - pontosDivisao[qtdPontos - 2][1];
-		derivada2[n] = derivada1[n + 1] - derivada1[n];
-	}
 }
 
 void mydisplay()
@@ -179,7 +196,7 @@ void mydisplay()
 		glEnd();
 	}
 
-	if (qtdPontos > 2 && SHOW_CURVE) bezier();
+	if (qtdPontos >= 2 && SHOW_CURVE) bezier();
 
 	glFlush();
 
@@ -203,6 +220,7 @@ void mydisplay2()
 
 		int N = numeroAvaliacoes;
 
+		// Para cada avaliação da curva, considera-se sua subdivisão nesse ponto e se calcula sua curvatura considerando suas derivadas, segundo a fórmula acima.
 		for (int i = 0; i < N - 2; i++) {
 			num = derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x;
 			den = (derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y);
@@ -373,12 +391,12 @@ int main(int argc, char **argv)
 	glutSpecialUpFunc(hadleSpecialKeyboard);
 	glutPositionWindow(0, 100);
 
-	glutInitWindowSize(window_width / 2, window_height / 2);
+	glutInitWindowSize(window2_width, window2_height);
 	DOIS = glutCreateWindow("Grafico da Curvatura");
 
 	glutPositionWindow(900, 40);
 	glutDisplayFunc(mydisplay2);
-	glutReshapeFunc(myreshape);
+	glutReshapeFunc(myreshape2);
 
 	myinit();
 	glutMainLoop();
