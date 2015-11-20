@@ -25,6 +25,7 @@ direito do mouse. A posicao e definida pela posicao atual do mouse.
 4- Esconder/mostrar os pontos de controle com a tecla 1.
 5- Esconder/mostrar a poligonal de controle com a tecla 2.
 6- Esconder/mostrar a curva de bezier com a tecla 3.
+7- Alterar o número de avaliações com a tecla ' e escrevendo no console o novo número.
 8- Limpar a tela apertando a tecla F5.
 9- Sair do programa apertando a tecla ESC.
 
@@ -84,29 +85,7 @@ void myreshape(GLsizei w, GLsizei h)
 	glOrtho(0, window_width, 0, window_height, -1.0, -1.0);
 }
 
-void drawTextBox(int fromLeft, int fromTop, int width, int height) {
-	//glColor3f(1.0f, 1.0f, 1.0f);
-	glColor3f(1.0f, 0, 0);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glBegin(GL_QUADS);
-	//glTexCoord2f(0, 0);
-	glVertex2i(fromLeft, fromTop);  // Upper Left
-	//glTexCoord2f(1, 0);
-	glVertex2i(fromLeft - width, fromTop);  // Uppright
-	//glTexCoord2f(1, 1);
-	glVertex2i(fromLeft - width, fromTop + height);  // Bottom right
-	//glTexCoord2f(0, 1);
-	glVertex2i(fromLeft, fromTop + height); // bottom left
-	glEnd();
-
-	glDisable(GL_BLEND);
-}
-
 void bezier() {
-	//printf("entrou!\n");
-
 	glBegin(GL_LINE_STRIP);
 
 	//int N = 100*qtdQuadrados;
@@ -124,12 +103,9 @@ void bezier() {
 		for (int i = 0; i < qtdPontos; i++) {
 			aux[i] = pontos[i];
 			pontosDivisao[0][i] = pontos[i];
-			if (t == v) printf("(%d,%d) ", 0, i);
+			//if (t == v) printf("(%d,%d) ", 0, i);
 		}
-		if (t == v)  puts("");
-
-
-
+		//if (t == v)  puts("");
 
 		for (int a = 0; a < q; a++) {
 			for (int i = 0; i < q - a; i++) {
@@ -139,10 +115,10 @@ void bezier() {
 				aux[i].x = x;
 				aux[i].y = y;
 
-				pontosDivisao[a+1][i] = aux[i];
-				if (t == v) printf("(%d,%d) ", a+1, i);
+				pontosDivisao[a + 1][i] = aux[i];
+				//if (t == v) printf("(%d,%d) ", a + 1, i);
 			}
-			if (t == v) puts("");
+			//if (t == v) puts("");
 		}
 
 		glColor3f(1, 0, 0);
@@ -150,8 +126,7 @@ void bezier() {
 		pontosCurva[n].x = aux[0].x;
 		pontosCurva[n].y = aux[0].y;
 
-
-		//calcDerivadas()
+		calcDerivadas(n, t);
 	}
 
 
@@ -159,13 +134,18 @@ void bezier() {
 	glEnd();
 }
 
-void calcDerivadas() {
+void calcDerivadas(int n, double t) {
 	int N = numeroAvaliacoes;
-	for (int i = 0; i < N-1; i++) {
-		derivada1[i] = pontosCurva[i + 1] - pontosCurva[i];
+
+	if (t > 0.5) {
+		derivada1[n] = pontosDivisao[qtdPontos - 2][0] - pontosDivisao[qtdPontos - 1][0];
+		derivada1[n + 1] = pontosDivisao[qtdPontos - 3][0] - pontosDivisao[qtdPontos - 2][0];
+		derivada2[n] = derivada1[n + 1] - derivada1[n];
 	}
-	for (int i = 0; i < N - 2; i++) {
-		derivada2[i] = derivada1[i + 1] - derivada1[i];
+	else {
+		derivada1[n] = pontosDivisao[qtdPontos - 2][1] - pontosDivisao[qtdPontos - 1][0];
+		derivada1[n + 1] = pontosDivisao[qtdPontos - 3][2] - pontosDivisao[qtdPontos - 2][1];
+		derivada2[n] = derivada1[n + 1] - derivada1[n];
 	}
 }
 
@@ -182,7 +162,7 @@ void mydisplay()
 			glColor3f(pontos[i].r, pontos[i].g, pontos[i].b);
 			glVertex2f(pontos[i].x, pontos[i].y);
 		}
-		glEnd();	
+		glEnd();
 	}
 
 
@@ -198,7 +178,7 @@ void mydisplay()
 		}
 		glEnd();
 	}
-	
+
 	if (qtdPontos > 2 && SHOW_CURVE) bezier();
 
 	glFlush();
@@ -207,79 +187,60 @@ void mydisplay()
 
 void mydisplay2()
 {
-	calcDerivadas();
-
+	//calcDerivadas();
 	glutSetWindow(DOIS);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	//http://www.math24.net/images/13sodi7.gif
-	// k = (x'y'' - y'x'')/
-	//	((x')^2 + (y')^2)^(3/2)
-	double K[maxPontos];
+	if (qtdPontos > 2) {
+		//http://www.math24.net/images/13sodi7.gif
+		// k = (x'y'' - y'x'')/
+		//	((x')^2 + (y')^2)^(3/2)
+		double K[maxPontos];
 
-	double maiorAbs = 0;
-	double num, den;
+		double maiorAbs = 0;
+		double num, den;
 
-	int N = numeroAvaliacoes;
+		int N = numeroAvaliacoes;
 
-	for (int i = 0; i < N-2; i++) {
-		num = derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x;
-		den = (derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y);
-		den = pow(den, 3);
-		den = sqrt(den);
-		K[i] = num / den;
-		//printf("i:%d num:%lf den:%lf k:%lf\n", i, num,den, K[i]);
-		maiorAbs = max(maiorAbs, fabs(K[i]));
-	}
+		for (int i = 0; i < N - 2; i++) {
+			num = derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x;
+			den = (derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y);
+			den = pow(den, 3);
+			den = sqrt(den);
+			K[i] = num / den;
+			//printf("i:%d num:%lf den:%lf k:%lf\n", i, num,den, K[i]);
+			maiorAbs = max(maiorAbs, fabs(K[i]));
+		}
 
-	glPointSize(GLfloat(5.0));
+		glPointSize(GLfloat(5.0));
 
-	int Q = N - 2;
+		double x;
+		double y;
 
-	glBegin(GL_POINTS);
 
-	double xMax = -1 + 2.0*(N - 3) / (N - 2);
-	xMax = 1 - xMax;
-	xMax /= 2;
+		glEnable(GL_LINE_SMOOTH);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	double x;
-	double y;
+		glBegin(GL_LINE_STRIP);
+		for (int i = 0; i < N - 2; i++) {
+			glColor3f(0, 1, 0);
 
-	for (int i = 0; i < N - 2; i++) {
-		glColor3f(0, 1, 0);
-		x = -1 + 2.0*i / (N - 2);
-		y = K[i] / maiorAbs;
+			x = -1 + 2.0*i / (N - 2);
+			y = K[i] / maiorAbs;
 
-		x /= 4;
-		x *= 3;
+			x /= 4;
+			x *= 3;
 
-		y /= 4;
-		y *= 3;
+			y /= 4;
+			y *= 3;
+			y = abs(y);
 
-		//glVertex2f(x, y);
-		//printf("i:%d qtd:%d X:%lf Y:%lf xMax:%lf\n", i, qtdPontos-2, -1 + (2.0*i)/(qtdPontos - 2), K[i] / maiorAbs, xMax);
-	}
-	glEnd();
-
-	glBegin(GL_LINE_STRIP);
-	for (int i = 0; i < N - 2; i++) {
-		glColor3f(0, 1, 0);
-
-		x = -1 + 2.0*i / (N - 2);
-		y = K[i] / maiorAbs;
-
-		x /= 4;
-		x *= 3;
-
-		y /= 4;
-		y *= 3;
-		y = abs(y);
-
-		glVertex2f(x, y);
+			glVertex2f(x, y);
+		}
 	}
 	glEnd();
-
 	glFlush();
 }
 
