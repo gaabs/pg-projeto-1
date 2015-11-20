@@ -1,30 +1,40 @@
 /*
 -----------------------------------------------------------------------------
-OpenGL Tutorial
-VOXAR Labs
+P2-11: Gráfico da Curvatura da Curva de Bézier Interativo:
 Computer Science Center - CIn
 Federal University of Pernambuco - UFPE
-http://www.cin.ufpe.br/~voxarlabs
 
-@author Tullio Lucena - tjsl
+@author Giovanni Barros (gaabs) e Pedro Sereno (psg2)
 
-Este programa foi feito para mostrar conceitos basicos de OpenGl e glut para
-a turma de Processamento Grafico do Centro de Informatica da UFPE.
+Descrição: o usuário entra via mouse com os pontos de controle de uma curva de Bézier. 
+O número de pontos de controle é arbitrário, sem limite. O sistema desenha a curva correspondente, 
+e, numa outra janela, desenha o gráfico da curvatura da curva (normalizada para caber na janela). 
+O usuário pode modificar o posicionamento dos pontos, deletar e inserir pontos, e o sistema 
+responder em tempo real de forma adequada, reconstruindo a curva correspondente. 
+O usuário poderá suprimir os pontos de controle, a poligonal de controle, e os pontos da curva. 
+O usuário também poderá determinar o número de avaliações que deverá ser usado para então o 
+sistema calcular os correspondentes pontos da curva e ligá-los por retas. 
+As avaliações deverão ser feitas obrigatoriamente com o Algoritmo de de Casteljau, 
+tanto para a curva quanto para o cálculo das derivadas.
 
 Funcionalidades:
-1-	Criar um Ponto com tamanho e cor aleatoria ao clicar com o botao
+1- Criar um Ponto com tamanho e cor aleatoria ao clicar com o botao
 direito do mouse. A posicao e definida pela posicao atual do mouse.
-2-	Movimentar o Ponto segurando o botao esquerdo do mouse e arrastando.
-3-	Limpar a tela apertando a tecla F5.
-4-	Sair do programa apertando a tecla ESC.
+2- Movimentar o Ponto segurando o botao esquerdo do mouse e arrastando.
+3- Apagar o Ponto ao clicar com o botao do meio do mouse.
+4- Esconder/mostrar os pontos de controle com a tecla 1.
+5- Esconder/mostrar a poligonal de controle com a tecla 2.
+6- Esconder/mostrar a curva de bezier com a tecla 3.
+8- Limpar a tela apertando a tecla F5.
+9- Sair do programa apertando a tecla ESC.
 
 Referencias:
-Funcoes de C/C++:
-http://www.cplusplus.com/
-Copia online do Red Book (OpenGL Programming Guide):
-http://fly.cc.fer.hr/~unreal/theredbook/
-Referencia online para os comandos OpenGL (Man pages):
-http://www.opengl.org/sdk/docs/man/
+OpenGL Tutorial da VOXAR Labs
+Curves and Surfaces for CAGD - Gerald Farin
+http://www.math24.net/curvature-of-plane-curves.html
+http://www.cs.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/Bezier/bezier-sub.html
+http://algorithmist.net/docs/subdivision.pdf
+http://link.periodicos.capes.gov.br.ez16.periodicos.capes.gov.br/sfxlcl41?frbrVersion=5&ctx_ver=Z39.88-2004&ctx_enc=info:ofi/enc:UTF-8&ctx_tim=2015-11-20T09%3A33%3A38IST&url_ver=Z39.88-2004&url_ctx_fmt=infofi/fmt:kev:mtx:ctx&rfr_id=info:sid/primo.exlibrisgroup.com:primo3-Article-sciversesciencedirect_elsevier&rft_val_fmt=info:ofi/fmt:kev:mtx:&rft.genre=article&rft.atitle=Curvature%20of%20singular%20B%C3%A9zier%20curves%20and%20surfaces&rft.jtitle=Computer%20Aided%20Geometric%20Design&rft.btitle=&rft.aulast=Sederberg&rft.auinit=&rft.auinit1=&rft.auinitm=&rft.ausuffix=&rft.au=Sederberg,%20Thomas%20W.&rft.aucorp=&rft.date=2011&rft.volume=28&rft.issue=4&rft.part=&rft.quarter=&rft.ssn=&rft.spage=233&rft.epage=244&rft.pages=233-244&rft.artnum=&rft.issn=0167-8396&rft.eissn=&rft.isbn=&rft.sici=&rft.coden=&rft_id=info:doi/10.1016/j.cagd.2011.03.004&rft.object_id=&svc_val_fmt=info:ofi/fmt:kev:mtx:sch_svc&rft.eisbn=&rft_dat=%3Csciversesciencedirect_elsevier%3ES0167-8396(11)00030-6%3C/sciversesciencedirect_elsevier%3E%3Cgrp_id%3E6461839330533267273%3C/grp_id%3E%3Coa%3E%3C/oa%3E&rft_id=info:oai/&svc.fulltext=yes&req.language=por
 
 -----------------------------------------------------------------------------
 */
@@ -40,6 +50,8 @@ int qtdPontos;
 int estado;
 GLfloat mouse_x, mouse_y;
 Ponto pontos[maxPontos];
+Ponto pontosCurva[maxPontos];
+Ponto pontosDivisao[maxPontos][maxPontos];
 Ponto derivada1[maxPontos];
 Ponto derivada2[maxPontos];
 Ponto aux[maxPontos];
@@ -111,22 +123,35 @@ void bezier() {
 
 		for (int i = 0; i < qtdPontos; i++) {
 			aux[i] = pontos[i];
+			pontosDivisao[0][i] = pontos[i];
+			if (t == v) printf("(%d,%d) ", 0, i);
 		}
+		if (t == v)  puts("");
 
-		while (q > 0) {
-			for (int i = 0; i < q; i++) {
+
+
+
+		for (int a = 0; a < q; a++) {
+			for (int i = 0; i < q - a; i++) {
 				x = (1 - t)*aux[i].x + t*aux[i + 1].x;
 				y = (1 - t)*aux[i].y + t*aux[i + 1].y;
 
 				aux[i].x = x;
 				aux[i].y = y;
 
+				pontosDivisao[a+1][i] = aux[i];
+				if (t == v) printf("(%d,%d) ", a+1, i);
 			}
-			q--;
+			if (t == v) puts("");
 		}
 
 		glColor3f(1, 0, 0);
 		glVertex2f(aux[0].x, aux[0].y);
+		pontosCurva[n].x = aux[0].x;
+		pontosCurva[n].y = aux[0].y;
+
+
+		//calcDerivadas()
 	}
 
 
@@ -135,10 +160,11 @@ void bezier() {
 }
 
 void calcDerivadas() {
-	for (int i = 0; i < qtdPontos-1; i++) {
-		derivada1[i] = pontos[i + 1] - pontos[i];
+	int N = numeroAvaliacoes;
+	for (int i = 0; i < N-1; i++) {
+		derivada1[i] = pontosCurva[i + 1] - pontosCurva[i];
 	}
-	for (int i = 0; i < qtdPontos - 2; i++) {
+	for (int i = 0; i < N - 2; i++) {
 		derivada2[i] = derivada1[i + 1] - derivada1[i];
 	}
 }
@@ -156,7 +182,7 @@ void mydisplay()
 			glColor3f(pontos[i].r, pontos[i].g, pontos[i].b);
 			glVertex2f(pontos[i].x, pontos[i].y);
 		}
-		glEnd();
+		glEnd();	
 	}
 
 
@@ -195,7 +221,9 @@ void mydisplay2()
 	double maiorAbs = 0;
 	double num, den;
 
-	for (int i = 0; i < qtdPontos-2; i++) {
+	int N = numeroAvaliacoes;
+
+	for (int i = 0; i < N-2; i++) {
 		num = derivada1[i].x*derivada2[i].y - derivada1[i].y*derivada2[i].x;
 		den = (derivada1[i].x*derivada1[i].x) + (derivada1[i].y*derivada1[i].y);
 		den = pow(den, 3);
@@ -207,20 +235,20 @@ void mydisplay2()
 
 	glPointSize(GLfloat(5.0));
 
-	int Q = qtdPontos - 2;
+	int Q = N - 2;
 
 	glBegin(GL_POINTS);
 
-	double xMax = -1 + 2.0*(qtdPontos - 3) / (qtdPontos - 2);
+	double xMax = -1 + 2.0*(N - 3) / (N - 2);
 	xMax = 1 - xMax;
 	xMax /= 2;
 
 	double x;
 	double y;
 
-	for (int i = 0; i < qtdPontos - 2; i++) {
+	for (int i = 0; i < N - 2; i++) {
 		glColor3f(0, 1, 0);
-		x = -1 + 2.0*i / (qtdPontos - 2);
+		x = -1 + 2.0*i / (N - 2);
 		y = K[i] / maiorAbs;
 
 		x /= 4;
@@ -229,16 +257,16 @@ void mydisplay2()
 		y /= 4;
 		y *= 3;
 
-		glVertex2f(x, y);
-		printf("i:%d qtd:%d X:%lf Y:%lf xMax:%lf\n", i, qtdPontos-2, -1 + (2.0*i)/(qtdPontos - 2), K[i] / maiorAbs, xMax);
+		//glVertex2f(x, y);
+		//printf("i:%d qtd:%d X:%lf Y:%lf xMax:%lf\n", i, qtdPontos-2, -1 + (2.0*i)/(qtdPontos - 2), K[i] / maiorAbs, xMax);
 	}
 	glEnd();
 
 	glBegin(GL_LINE_STRIP);
-	for (int i = 0; i < qtdPontos - 2; i++) {
+	for (int i = 0; i < N - 2; i++) {
 		glColor3f(0, 1, 0);
 
-		x = -1 + 2.0*i / (qtdPontos - 2);
+		x = -1 + 2.0*i / (N - 2);
 		y = K[i] / maiorAbs;
 
 		x /= 4;
@@ -246,6 +274,7 @@ void mydisplay2()
 
 		y /= 4;
 		y *= 3;
+		y = abs(y);
 
 		glVertex2f(x, y);
 	}
@@ -384,7 +413,7 @@ int main(int argc, char **argv)
 	glutPositionWindow(0, 100);
 
 	glutInitWindowSize(window_width / 2, window_height / 2);
-	DOIS = glutCreateWindow("Grafico");
+	DOIS = glutCreateWindow("Grafico da Curvatura");
 
 	glutPositionWindow(900, 40);
 	glutDisplayFunc(mydisplay2);
